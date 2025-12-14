@@ -1,9 +1,13 @@
 export interface Course {
-  id?: number;
-  code: string;
+  courseId: string;
   name: string;
-  description?: string;
-  credits: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  department?: string;
+  credits?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CoursesResponse {
+  count: number;
+  courses: Course[];
 }

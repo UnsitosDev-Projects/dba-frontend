@@ -8,5 +8,9 @@ export const CURSOS_ROUTES: Routes = [
   {
     path: 'nuevo',
     loadComponent: () => import('./curso-form.page').then(m => m.CursoFormPage)
+  },
+  {
+    path: 'editar/:id',
+    loadComponent: () => import('./curso-form.page').then(m => m.CursoFormPage)
   }
 ];
