@@ -233,7 +233,7 @@ export const NAVIGATION_ITEMS = [
 ## Build
 
 Para compilar el proyecto para producción:
-
+```
 ## Troubleshooting
 
 > [!WARNING]
@@ -262,28 +262,6 @@ Para compilar el proyecto para producción:
 | `tailwind.config.js` | Configuración de Tailwind CSS |
 |------------|-------------|
 | **Dependency Injection** | Usar `inject()` en lugar de constructor |
-## Próximos Pasos Recomendados
-
-> [!TIP]
-> Estas son las mejoras sugeridas para extender la funcionalidad de la aplicación.
-
-| Prioridad | Tarea |
-|-----------|-------|
-| Alta | Conectar con el backend real |
-| Alta | Implementar autenticación completa |
-| Media | Agregar paginación a las tablas |
-| Media | Implementar búsqueda y filtros avanzados |
-| Media | Agregar validaciones personalizadas |
-| Media | Implementar guards de ruta |
-| Baja | Agregar notificaciones toast |
-| Baja | Implementar tests unitarios |l
-2. Implementar autenticación completa
-3. Agregar paginación a las tablas
-4. Implementar búsqueda y filtros avanzados
-5. Agregar validaciones personalizadas
-6. Implementar guards de ruta
-7. Agregar notificaciones toast
-8. Implementar tests unitarios
 
 ## Recursos Adicionales
 
