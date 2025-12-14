@@ -15,7 +15,7 @@ export class ProfessorService {
     return this.repository.getAll();
   }
 
-  getById(id: number): Observable<Professor> {
+  getById(id: string): Observable<Professor> {
     return this.repository.getById(id);
   }
 
@@ -23,11 +23,11 @@ export class ProfessorService {
     return this.repository.create(dto);
   }
 
-  update(id: number, dto: UpdateProfessorDto): Observable<Professor> {
+  update(id: string, dto: Partial<CreateProfessorDto>): Observable<Professor> {
     return this.repository.update(id, dto);
   }
 
-  delete(id: number): Observable<void> {
+  delete(id: string): Observable<void> {
     return this.repository.delete(id);
   }
 }

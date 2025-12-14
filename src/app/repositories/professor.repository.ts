@@ -14,22 +14,35 @@ export class ProfessorRepository {
   private baseUrl = getEndpoint(API_CONFIG.ENDPOINTS.PROFESSORS);
 
   getAll(): Observable<Professor[]> {
-    return this.http.get<Professor[]>(this.baseUrl);
+    console.log('GET professors:', this.baseUrl);
+    const headers = { 'Content-Type': 'application/json' };
+    return this.http.get<Professor[]>(this.baseUrl, { headers });
   }
 
-  getById(id: number): Observable<Professor> {
-    return this.http.get<Professor>(`${this.baseUrl}/${id}`);
+  getById(id: string): Observable<Professor> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('GET professor:', url);
+    const headers = { 'Content-Type': 'application/json' };
+    return this.http.get<Professor>(url, { headers });
   }
 
   create(dto: CreateProfessorDto): Observable<Professor> {
-    return this.http.post<Professor>(this.baseUrl, dto);
+    console.log('POST professor:', this.baseUrl, dto);
+    const headers = { 'Content-Type': 'application/json' };
+    return this.http.post<Professor>(this.baseUrl, dto, { headers });
   }
 
-  update(id: number, dto: UpdateProfessorDto): Observable<Professor> {
-    return this.http.put<Professor>(`${this.baseUrl}/${id}`, dto);
+  update(id: string, dto: Partial<CreateProfessorDto>): Observable<Professor> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('PUT professor:', url, dto);
+    const headers = { 'Content-Type': 'application/json' };
+    return this.http.put<Professor>(url, dto, { headers });
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  delete(id: string): Observable<void> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('DELETE professor:', url);
+    const headers = { 'Content-Type': 'application/json' };
+    return this.http.delete<void>(url, { headers });
   }
 }

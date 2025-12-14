@@ -1,10 +1,6 @@
 export interface Professor {
-  id?: number;
-  firstName: string;
-  lastName: string;
+  id: string;
+  name: string;
+  department: string;
   email: string;
-  phone?: string;
-  specialty?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
