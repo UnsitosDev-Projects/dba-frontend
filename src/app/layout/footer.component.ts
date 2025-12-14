@@ -9,6 +9,7 @@ import { Component } from '@angular/core';
         <p>&copy; Unsitos Dev.</p>
         <div class="flex space-x-4">
           <a href="#" class="hover:text-gray-900">Eleazar Jarquín Ramos</a>
+          <a href="#" class="hover:text-gray-900">Joan Manuel Abeldaño</a>
           <a href="#" class="hover:text-gray-900">Hugo Nicolas Aragón M.</a>
           <a href="#" class="hover:text-gray-900">Manuel Alejandro Pinacho H.</a>
           <a href="#" class="hover:text-gray-900">Daniel Bernardino Reyes N.</a>
