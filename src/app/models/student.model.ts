@@ -1,11 +1,6 @@
 export interface Student {
-  id?: number;
-  enrollmentNumber: string;
-  firstName: string;
-  lastName: string;
+  id: string;
+  name: string;
   email: string;
-  phone?: string;
-  enrollmentDate: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
+  career: string;
 }

@@ -1,6 +1,6 @@
 export interface CreateCourseDto {
-  code: string;
+  courseId: string;
   name: string;
-  description?: string;
-  credits: number;
+  department?: string;
+  credits?: number;
 }

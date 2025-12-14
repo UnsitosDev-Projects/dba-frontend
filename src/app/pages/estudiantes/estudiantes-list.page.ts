@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { Student } from '../../models/student.model';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 
 @Component({
   selector: 'app-estudiantes-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -40,19 +41,16 @@ import { Student } from '../../models/student.model';
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Matrícula
+                ID
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nombre Completo
+                Nombre
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Teléfono
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Fecha Ingreso
+                Carrera
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -77,8 +75,8 @@ import { Student } from '../../models/student.model';
             } @else {
               @for (student of students(); track student.id) {
                 <tr class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ student.enrollmentNumber }}
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ student.id }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
@@ -87,7 +85,7 @@ import { Student } from '../../models/student.model';
                       </div>
                       <div>
                         <div class="text-sm font-medium text-gray-900">
-                          {{ student.firstName }} {{ student.lastName }}
+                          {{ student.name }}
                         </div>
                       </div>
                     </div>
@@ -96,16 +94,21 @@ import { Student } from '../../models/student.model';
                     {{ student.email }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ student.phone || 'N/A' }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ student.enrollmentDate | date }}
+                    {{ student.career }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button class="text-blue-600 hover:text-blue-900">
+                    <button 
+                      (click)="navigateToEdit(student.id)"
+                      class="text-blue-600 hover:text-blue-900"
+                      title="Editar estudiante"
+                    >
                       <span class="material-icons text-sm">edit</span>
                     </button>
-                    <button class="text-red-600 hover:text-red-900">
+                    <button 
+                      (click)="confirmDelete(student.id)"
+                      class="text-red-600 hover:text-red-900"
+                      title="Eliminar estudiante"
+                    >
                       <span class="material-icons text-sm">delete</span>
                     </button>
                   </td>
@@ -115,6 +118,15 @@ import { Student } from '../../models/student.model';
           </tbody>
         </table>
       </div>
+
+      <!-- Confirm Dialog -->
+      <app-confirm-dialog
+        [isOpen]="showDeleteDialog()"
+        [title]="'Eliminar Estudiante'"
+        [message]="'¿Está seguro que desea eliminar este estudiante? Esta acción no se puede deshacer.'"
+        (confirm)="deleteStudent()"
+        (cancel)="cancelDelete()"
+      />
     </div>
   `
 })
@@ -124,6 +136,8 @@ export class EstudiantesListPage implements OnInit {
 
   students = signal<Student[]>([]);
   loading = signal(true);
+  showDeleteDialog = signal(false);
+  studentToDelete = signal<string | null>(null);
 
   ngOnInit() {
     this.loadStudents();
@@ -133,10 +147,12 @@ export class EstudiantesListPage implements OnInit {
     this.loading.set(true);
     this.studentService.getAll().subscribe({
       next: (students) => {
+        console.log('Students loaded:', students);
         this.students.set(students);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading students:', error);
         this.loading.set(false);
       }
     });
@@ -144,5 +160,41 @@ export class EstudiantesListPage implements OnInit {
 
   navigateToNew() {
     this.router.navigate(['/estudiantes/nuevo']);
+  }
+
+  navigateToEdit(studentId: string) {
+    console.log('Navigating to edit student:', studentId);
+    this.router.navigate(['/estudiantes/editar', studentId]);
+  }
+
+  confirmDelete(studentId: string) {
+    this.studentToDelete.set(studentId);
+    this.showDeleteDialog.set(true);
+  }
+
+  deleteStudent() {
+    const studentId = this.studentToDelete();
+    if (studentId) {
+      console.log('Attempting to delete student:', studentId);
+      this.studentService.delete(studentId).subscribe({
+        next: () => {
+          console.log('Student deleted successfully');
+          this.loadStudents();
+          this.showDeleteDialog.set(false);
+          this.studentToDelete.set(null);
+        },
+        error: (error) => {
+          console.error('Error deleting student:', error);
+          alert('Error al eliminar el estudiante: ' + (error.error?.message || error.message || 'Error desconocido'));
+          this.showDeleteDialog.set(false);
+          this.studentToDelete.set(null);
+        }
+      });
+    }
+  }
+
+  cancelDelete() {
+    this.showDeleteDialog.set(false);
+    this.studentToDelete.set(null);
   }
 }

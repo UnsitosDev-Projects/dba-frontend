@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 
 @Component({
@@ -20,7 +20,7 @@ import { CourseService } from '../../services/course.service';
             <span class="material-icons">arrow_back</span>
           </button>
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">Nuevo Curso</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ isEditMode() ? 'Editar' : 'Nuevo' }} Curso</h1>
             <p class="text-gray-600 mt-2">Completa la información del curso</p>
           </div>
         </div>
@@ -28,18 +28,20 @@ import { CourseService } from '../../services/course.service';
 
       <!-- Form -->
       <form [formGroup]="courseForm" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
-        <!-- Código -->
+        <!-- Código del Curso -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Código del Curso *
           </label>
           <input 
             type="text"
-            formControlName="code"
+            formControlName="courseId"
+            [readonly]="isEditMode()"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.bg-gray-100]="isEditMode()"
             placeholder="Ej: MAT101"
           />
-          @if (courseForm.get('code')?.invalid && courseForm.get('code')?.touched) {
+          @if (courseForm.get('courseId')?.invalid && courseForm.get('courseId')?.touched) {
             <p class="mt-1 text-sm text-red-600">El código es requerido</p>
           }
         </div>
@@ -60,23 +62,23 @@ import { CourseService } from '../../services/course.service';
           }
         </div>
 
-        <!-- Descripción -->
+        <!-- Departamento -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Descripción
+            Departamento
           </label>
-          <textarea 
-            formControlName="description"
-            rows="4"
+          <input 
+            type="text"
+            formControlName="department"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Descripción del curso..."
-          ></textarea>
+            placeholder="Ej: Matemáticas"
+          />
         </div>
 
         <!-- Créditos -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Créditos *
+            Créditos
           </label>
           <input 
             type="number"
@@ -86,9 +88,6 @@ import { CourseService } from '../../services/course.service';
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Ej: 4"
           />
-          @if (courseForm.get('credits')?.invalid && courseForm.get('credits')?.touched) {
-            <p class="mt-1 text-sm text-red-600">Los créditos son requeridos (1-10)</p>
-          }
         </div>
 
         <!-- Actions -->
@@ -115,31 +114,84 @@ import { CourseService } from '../../services/course.service';
     </div>
   `
 })
-export class CursoFormPage {
+export class CursoFormPage implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private courseService = inject(CourseService);
 
   submitting = signal(false);
+  isEditMode = signal(false);
+  courseId = signal<string | null>(null);
 
   courseForm: FormGroup = this.fb.group({
-    code: ['', Validators.required],
+    courseId: ['', Validators.required],
     name: ['', Validators.required],
-    description: [''],
-    credits: [null, [Validators.required, Validators.min(1), Validators.max(10)]]
+    department: [''],
+    credits: [null]
   });
+
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.isEditMode.set(true);
+      this.courseId.set(id);
+      this.loadCourse(id);
+    }
+  }
+
+  loadCourse(id: string) {
+    console.log('Loading course:', id);
+    this.courseService.getById(id).subscribe({
+      next: (course) => {
+        console.log('Course loaded:', course);
+        this.courseForm.patchValue({
+          courseId: course.courseId,
+          name: course.name,
+          department: course.department,
+          credits: course.credits
+        });
+      },
+      error: (error) => {
+        console.error('Error loading course:', error);
+        alert('Error al cargar el curso: ' + (error.error?.message || error.message || 'Error desconocido'));
+        this.router.navigate(['/cursos']);
+      }
+    });
+  }
 
   onSubmit() {
     if (this.courseForm.valid) {
       this.submitting.set(true);
-      this.courseService.create(this.courseForm.value).subscribe({
-        next: () => {
-          this.router.navigate(['/cursos']);
-        },
-        error: () => {
-          this.submitting.set(false);
-        }
-      });
+      const formValue = this.courseForm.value;
+      
+      if (this.isEditMode() && this.courseId()) {
+        console.log('Updating course:', this.courseId(), formValue);
+        this.courseService.update(this.courseId()!, formValue).subscribe({
+          next: () => {
+            console.log('Course updated successfully');
+            this.router.navigate(['/cursos']);
+          },
+          error: (error) => {
+            console.error('Error updating course:', error);
+            alert('Error al actualizar el curso: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      } else {
+        console.log('Creating course:', formValue);
+        this.courseService.create(formValue).subscribe({
+          next: () => {
+            console.log('Course created successfully');
+            this.router.navigate(['/cursos']);
+          },
+          error: (error) => {
+            console.error('Error creating course:', error);
+            alert('Error al crear el curso: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      }
     }
   }
 

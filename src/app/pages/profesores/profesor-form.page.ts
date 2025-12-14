@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProfessorService } from '../../services/professor.service';
 
 @Component({
@@ -20,7 +20,7 @@ import { ProfessorService } from '../../services/professor.service';
             <span class="material-icons">arrow_back</span>
           </button>
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">Nuevo Profesor</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ isEditMode() ? 'Editar' : 'Nuevo' }} Profesor</h1>
             <p class="text-gray-600 mt-2">Completa la información del profesor</p>
           </div>
         </div>
@@ -28,41 +28,39 @@ import { ProfessorService } from '../../services/professor.service';
 
       <!-- Form -->
       <form [formGroup]="professorForm" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
-        <!-- Nombres -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Nombre *
-            </label>
-            <input 
-              type="text"
-              formControlName="firstName"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre"
-            />
-            @if (professorForm.get('firstName')?.invalid && professorForm.get('firstName')?.touched) {
-              <p class="mt-1 text-sm text-red-600">El nombre es requerido</p>
-            }
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Apellido *
-            </label>
-            <input 
-              type="text"
-              formControlName="lastName"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Apellido"
-            />
-            @if (professorForm.get('lastName')?.invalid && professorForm.get('lastName')?.touched) {
-              <p class="mt-1 text-sm text-red-600">El apellido es requerido</p>
-            }
-          </div>
+        <!-- Nombre Completo -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nombre Completo *
+          </label>
+          <input 
+            type="text"
+            formControlName="name"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ej: Dr. John Smith"
+          />
+          @if (professorForm.get('name')?.invalid && professorForm.get('name')?.touched) {
+            <p class="mt-1 text-sm text-red-600">El nombre es requerido</p>
+          }
         </div>
 
-        <!-- Email y Teléfono -->
+        <!-- Departamento y Email -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Departamento *
+            </label>
+            <input 
+              type="text"
+              formControlName="department"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Computer Science"
+            />
+            @if (professorForm.get('department')?.invalid && professorForm.get('department')?.touched) {
+              <p class="mt-1 text-sm text-red-600">El departamento es requerido</p>
+            }
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
               Email *
@@ -77,31 +75,6 @@ import { ProfessorService } from '../../services/professor.service';
               <p class="mt-1 text-sm text-red-600">Email válido requerido</p>
             }
           </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Teléfono
-            </label>
-            <input 
-              type="tel"
-              formControlName="phone"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="+1234567890"
-            />
-          </div>
-        </div>
-
-        <!-- Especialidad -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Especialidad
-          </label>
-          <input 
-            type="text"
-            formControlName="specialty"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ej: Matemáticas"
-          />
         </div>
 
         <!-- Actions -->
@@ -128,32 +101,82 @@ import { ProfessorService } from '../../services/professor.service';
     </div>
   `
 })
-export class ProfesorFormPage {
+export class ProfesorFormPage implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private professorService = inject(ProfessorService);
 
   submitting = signal(false);
+  isEditMode = signal(false);
+  professorId = signal<string | null>(null);
 
   professorForm: FormGroup = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    phone: [''],
-    specialty: ['']
+    name: ['', Validators.required],
+    department: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]]
   });
+
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.isEditMode.set(true);
+      this.professorId.set(id);
+      this.loadProfessor(id);
+    }
+  }
+
+  loadProfessor(id: string) {
+    console.log('Loading professor:', id);
+    this.professorService.getById(id).subscribe({
+      next: (professor) => {
+        console.log('Professor loaded:', professor);
+        this.professorForm.patchValue({
+          name: professor.name,
+          department: professor.department,
+          email: professor.email
+        });
+      },
+      error: (error) => {
+        console.error('Error loading professor:', error);
+        alert('Error al cargar el profesor: ' + (error.error?.message || error.message || 'Error desconocido'));
+        this.router.navigate(['/profesores']);
+      }
+    });
+  }
 
   onSubmit() {
     if (this.professorForm.valid) {
       this.submitting.set(true);
-      this.professorService.create(this.professorForm.value).subscribe({
-        next: () => {
-          this.router.navigate(['/profesores']);
-        },
-        error: () => {
-          this.submitting.set(false);
-        }
-      });
+      const formValue = this.professorForm.value;
+      
+      if (this.isEditMode() && this.professorId()) {
+        console.log('Updating professor:', this.professorId(), formValue);
+        this.professorService.update(this.professorId()!, formValue).subscribe({
+          next: () => {
+            console.log('Professor updated successfully');
+            this.router.navigate(['/profesores']);
+          },
+          error: (error) => {
+            console.error('Error updating professor:', error);
+            alert('Error al actualizar el profesor: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      } else {
+        console.log('Creating professor:', formValue);
+        this.professorService.create(formValue).subscribe({
+          next: () => {
+            console.log('Professor created successfully');
+            this.router.navigate(['/profesores']);
+          },
+          error: (error) => {
+            console.error('Error creating professor:', error);
+            alert('Error al crear el profesor: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      }
     }
   }
 

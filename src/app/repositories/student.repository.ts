@@ -13,22 +13,32 @@ export class StudentRepository {
   private baseUrl = getEndpoint(API_CONFIG.ENDPOINTS.STUDENTS);
 
   getAll(): Observable<Student[]> {
-    return this.http.get<Student[]>(this.baseUrl);
+    const url = `${this.baseUrl}/`;
+    console.log('GET students:', url);
+    return this.http.get<Student[]>(url);
   }
 
-  getById(id: number): Observable<Student> {
-    return this.http.get<Student>(`${this.baseUrl}/${id}`);
+  getById(id: string): Observable<Student> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('GET student:', url);
+    return this.http.get<Student>(url);
   }
 
   create(dto: CreateStudentDto): Observable<Student> {
-    return this.http.post<Student>(this.baseUrl, dto);
+    const url = `${this.baseUrl}/`;
+    console.log('POST student:', url, dto);
+    return this.http.post<Student>(url, dto);
   }
 
-  update(id: number, dto: Partial<CreateStudentDto>): Observable<Student> {
-    return this.http.put<Student>(`${this.baseUrl}/${id}`, dto);
+  update(id: string, dto: Partial<CreateStudentDto>): Observable<Student> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('PUT student:', url, dto);
+    return this.http.put<Student>(url, dto);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  delete(id: string): Observable<void> {
+    const url = `${this.baseUrl}/${id}`;
+    console.log('DELETE student:', url);
+    return this.http.delete<void>(url);
   }
 }

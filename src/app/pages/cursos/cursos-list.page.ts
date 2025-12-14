@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { Course } from '../../models/course.model';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 
 @Component({
   selector: 'app-cursos-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -26,22 +27,22 @@ import { Course } from '../../models/course.model';
       </div>
 
       <!-- Search and Filters -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
+      <!-- <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="flex flex-col md:flex-row gap-4">
-          <div class="flex-1">
-            <input 
+          <div class="flex-1"> -->
+            <!-- <input 
               type="text"
               placeholder="Buscar cursos..."
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            /> -->
+          <!-- </div>
           <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option>Todos los estados</option>
             <option>Activo</option>
             <option>Inactivo</option>
           </select>
         </div>
-      </div>
+      </div> -->
 
       <!-- Courses Table -->
       <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -55,7 +56,7 @@ import { Course } from '../../models/course.model';
                 Nombre
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Descripción
+                Departamento
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Créditos
@@ -84,19 +85,19 @@ import { Course } from '../../models/course.model';
                 </td>
               </tr>
             } @else {
-              @for (course of courses(); track course.id) {
+              @for (course of courses(); track course.courseId) {
                 <tr class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ course.code }}
+                    {{ course.courseId }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ course.name }}
+                    {{ course.name || 'N/A' }}
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500">
-                    {{ course.description }}
+                    {{ course.department || 'N/A' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ course.credits }}
+                    {{ course.credits || 'N/A' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -104,10 +105,18 @@ import { Course } from '../../models/course.model';
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button class="text-blue-600 hover:text-blue-900">
+                    <button 
+                      (click)="navigateToEdit(course.courseId)"
+                      class="text-blue-600 hover:text-blue-900"
+                      title="Editar curso"
+                    >
                       <span class="material-icons text-sm">edit</span>
                     </button>
-                    <button class="text-red-600 hover:text-red-900">
+                    <button 
+                      (click)="confirmDelete(course.courseId)"
+                      class="text-red-600 hover:text-red-900"
+                      title="Eliminar curso"
+                    >
                       <span class="material-icons text-sm">delete</span>
                     </button>
                   </td>
@@ -117,6 +126,15 @@ import { Course } from '../../models/course.model';
           </tbody>
         </table>
       </div>
+
+      <!-- Confirm Dialog -->
+      <app-confirm-dialog
+        [isOpen]="showDeleteDialog()"
+        [title]="'Eliminar Curso'"
+        [message]="'¿Está seguro que desea eliminar este curso? Esta acción no se puede deshacer.'"
+        (confirm)="deleteCourse()"
+        (cancel)="cancelDelete()"
+      />
     </div>
   `
 })
@@ -126,6 +144,8 @@ export class CursosListPage implements OnInit {
 
   courses = signal<Course[]>([]);
   loading = signal(true);
+  showDeleteDialog = signal(false);
+  courseToDelete = signal<string | null>(null);
 
   ngOnInit() {
     this.loadCourses();
@@ -134,11 +154,14 @@ export class CursosListPage implements OnInit {
   loadCourses() {
     this.loading.set(true);
     this.courseService.getAll().subscribe({
-      next: (courses) => {
-        this.courses.set(courses);
+      next: (response) => {
+        console.log('API Response:', response);
+        this.courses.set(response.courses || []);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading courses:', error);
+        this.courses.set([]);
         this.loading.set(false);
       }
     });
@@ -146,5 +169,41 @@ export class CursosListPage implements OnInit {
 
   navigateToNew() {
     this.router.navigate(['/cursos/nuevo']);
+  }
+
+  navigateToEdit(courseId: string) {
+    console.log('Navigating to edit course:', courseId);
+    this.router.navigate(['/cursos/editar', courseId]);
+  }
+
+  confirmDelete(courseId: string) {
+    this.courseToDelete.set(courseId);
+    this.showDeleteDialog.set(true);
+  }
+
+  deleteCourse() {
+    const courseId = this.courseToDelete();
+    if (courseId) {
+      console.log('Attempting to delete course:', courseId);
+      this.courseService.delete(courseId).subscribe({
+        next: () => {
+          console.log('Course deleted successfully');
+          this.loadCourses();
+          this.showDeleteDialog.set(false);
+          this.courseToDelete.set(null);
+        },
+        error: (error) => {
+          console.error('Error deleting course:', error);
+          alert('Error al eliminar el curso: ' + (error.error?.message || error.message || 'Error desconocido'));
+          this.showDeleteDialog.set(false);
+          this.courseToDelete.set(null);
+        }
+      });
+    }
+  }
+
+  cancelDelete() {
+    this.showDeleteDialog.set(false);
+    this.courseToDelete.set(null);
   }
 }
