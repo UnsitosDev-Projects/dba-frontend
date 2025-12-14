@@ -5,6 +5,20 @@ Aplicación Angular 20+ con arquitectura limpia y componentes standalone para ge
 > [!NOTE]
 > Este proyecto fue generado con Angular CLI 20.2.2 y utiliza las últimas características de Angular incluyendo Signals y Componentes Standalone.
 
+##  Instalación de Dependencias
+
+Antes de iniciar el proyecto, instala todas las dependencias necesarias:
+
+```bash
+npm install
+```
+
+**Dependencias principales:**
+- Angular 20+
+- Tailwind CSS
+- RxJS
+- TypeScript
+
 ## Características
 
 | Característica | Descripción |
