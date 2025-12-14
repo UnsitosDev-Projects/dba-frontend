@@ -20,7 +20,7 @@ export class ProfessorRepository {
   }
 
   getById(id: string): Observable<Professor> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('GET professor:', url);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.get<Professor>(url, { headers });
@@ -33,14 +33,14 @@ export class ProfessorRepository {
   }
 
   update(id: string, dto: Partial<CreateProfessorDto>): Observable<Professor> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('PUT professor:', url, dto);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.put<Professor>(url, dto, { headers });
   }
 
   delete(id: string): Observable<void> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('DELETE professor:', url);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.delete<void>(url, { headers });

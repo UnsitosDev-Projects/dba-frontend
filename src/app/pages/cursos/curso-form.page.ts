@@ -42,7 +42,15 @@ import { CourseService } from '../../services/course.service';
             placeholder="Ej: MAT101"
           />
           @if (courseForm.get('courseId')?.invalid && courseForm.get('courseId')?.touched) {
-            <p class="mt-1 text-sm text-red-600">El código es requerido</p>
+            @if (courseForm.get('courseId')?.errors?.['required']) {
+              <p class="mt-1 text-sm text-red-600">El código es requerido</p>
+            }
+            @if (courseForm.get('courseId')?.errors?.['pattern']) {
+              <p class="mt-1 text-sm text-red-600">El código solo puede contener letras mayúsculas y números (sin espacios)</p>
+            }
+            @if (courseForm.get('courseId')?.errors?.['minlength'] || courseForm.get('courseId')?.errors?.['maxlength']) {
+              <p class="mt-1 text-sm text-red-600">El código debe tener entre 2 y 10 caracteres</p>
+            }
           }
         </div>
 
@@ -125,7 +133,12 @@ export class CursoFormPage implements OnInit {
   courseId = signal<string | null>(null);
 
   courseForm: FormGroup = this.fb.group({
-    courseId: ['', Validators.required],
+    courseId: ['', [
+      Validators.required,
+      Validators.pattern(/^[A-Z0-9]+$/),
+      Validators.minLength(2),
+      Validators.maxLength(10)
+    ]],
     name: ['', Validators.required],
     department: [''],
     credits: [null]

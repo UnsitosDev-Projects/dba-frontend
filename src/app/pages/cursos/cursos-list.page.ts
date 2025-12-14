@@ -100,9 +100,15 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
                     {{ course.credits || 'N/A' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      Activo
-                    </span>
+                    @if (course.name && course.department) {
+                      <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Activo
+                      </span>
+                    } @else {
+                      <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Incompleto
+                      </span>
+                    }
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button 
@@ -156,6 +162,7 @@ export class CursosListPage implements OnInit {
     this.courseService.getAll().subscribe({
       next: (response) => {
         console.log('API Response:', response);
+        console.log('First course data:', response.courses?.[0]);
         this.courses.set(response.courses || []);
         this.loading.set(false);
       },
