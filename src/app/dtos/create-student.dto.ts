@@ -1,8 +1,5 @@
 export interface CreateStudentDto {
-  enrollmentNumber: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
-  phone?: string;
-  enrollmentDate: Date;
+  career: string;
 }

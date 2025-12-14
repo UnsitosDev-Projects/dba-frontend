@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 
 @Component({
@@ -20,7 +20,7 @@ import { StudentService } from '../../services/student.service';
             <span class="material-icons">arrow_back</span>
           </button>
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">Nuevo Estudiante</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ isEditMode() ? 'Editar' : 'Nuevo' }} Estudiante</h1>
             <p class="text-gray-600 mt-2">Completa la información del estudiante</p>
           </div>
         </div>
@@ -28,56 +28,23 @@ import { StudentService } from '../../services/student.service';
 
       <!-- Form -->
       <form [formGroup]="studentForm" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
-        <!-- Número de Matrícula -->
+        <!-- Nombre Completo -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Número de Matrícula *
+            Nombre Completo *
           </label>
           <input 
             type="text"
-            formControlName="enrollmentNumber"
+            formControlName="name"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ej: 2024001"
+            placeholder="Ej: Juan Pérez"
           />
-          @if (studentForm.get('enrollmentNumber')?.invalid && studentForm.get('enrollmentNumber')?.touched) {
-            <p class="mt-1 text-sm text-red-600">El número de matrícula es requerido</p>
+          @if (studentForm.get('name')?.invalid && studentForm.get('name')?.touched) {
+            <p class="mt-1 text-sm text-red-600">El nombre es requerido</p>
           }
         </div>
 
-        <!-- Nombres -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Nombre *
-            </label>
-            <input 
-              type="text"
-              formControlName="firstName"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre"
-            />
-            @if (studentForm.get('firstName')?.invalid && studentForm.get('firstName')?.touched) {
-              <p class="mt-1 text-sm text-red-600">El nombre es requerido</p>
-            }
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Apellido *
-            </label>
-            <input 
-              type="text"
-              formControlName="lastName"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Apellido"
-            />
-            @if (studentForm.get('lastName')?.invalid && studentForm.get('lastName')?.touched) {
-              <p class="mt-1 text-sm text-red-600">El apellido es requerido</p>
-            }
-          </div>
-        </div>
-
-        <!-- Email y Teléfono -->
+        <!-- Email y Carrera -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -96,30 +63,18 @@ import { StudentService } from '../../services/student.service';
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Teléfono
+              Carrera *
             </label>
             <input 
-              type="tel"
-              formControlName="phone"
+              type="text"
+              formControlName="career"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="+1234567890"
+              placeholder="Ej: Ingeniería en Sistemas"
             />
+            @if (studentForm.get('career')?.invalid && studentForm.get('career')?.touched) {
+              <p class="mt-1 text-sm text-red-600">La carrera es requerida</p>
+            }
           </div>
-        </div>
-
-        <!-- Fecha de Ingreso -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Fecha de Ingreso *
-          </label>
-          <input 
-            type="date"
-            formControlName="enrollmentDate"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          @if (studentForm.get('enrollmentDate')?.invalid && studentForm.get('enrollmentDate')?.touched) {
-            <p class="mt-1 text-sm text-red-600">La fecha de ingreso es requerida</p>
-          }
         </div>
 
         <!-- Actions -->
@@ -146,33 +101,82 @@ import { StudentService } from '../../services/student.service';
     </div>
   `
 })
-export class EstudianteFormPage {
+export class EstudianteFormPage implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private studentService = inject(StudentService);
 
   submitting = signal(false);
+  isEditMode = signal(false);
+  studentId = signal<string | null>(null);
 
   studentForm: FormGroup = this.fb.group({
-    enrollmentNumber: ['', Validators.required],
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
+    name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    phone: [''],
-    enrollmentDate: ['', Validators.required]
+    career: ['', Validators.required]
   });
+
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.isEditMode.set(true);
+      this.studentId.set(id);
+      this.loadStudent(id);
+    }
+  }
+
+  loadStudent(id: string) {
+    console.log('Loading student:', id);
+    this.studentService.getById(id).subscribe({
+      next: (student) => {
+        console.log('Student loaded:', student);
+        this.studentForm.patchValue({
+          name: student.name,
+          email: student.email,
+          career: student.career
+        });
+      },
+      error: (error) => {
+        console.error('Error loading student:', error);
+        alert('Error al cargar el estudiante: ' + (error.error?.message || error.message || 'Error desconocido'));
+        this.router.navigate(['/estudiantes']);
+      }
+    });
+  }
 
   onSubmit() {
     if (this.studentForm.valid) {
       this.submitting.set(true);
-      this.studentService.create(this.studentForm.value).subscribe({
-        next: () => {
-          this.router.navigate(['/estudiantes']);
-        },
-        error: () => {
-          this.submitting.set(false);
-        }
-      });
+      const formValue = this.studentForm.value;
+      
+      if (this.isEditMode() && this.studentId()) {
+        console.log('Updating student:', this.studentId(), formValue);
+        this.studentService.update(this.studentId()!, formValue).subscribe({
+          next: () => {
+            console.log('Student updated successfully');
+            this.router.navigate(['/estudiantes']);
+          },
+          error: (error) => {
+            console.error('Error updating student:', error);
+            alert('Error al actualizar el estudiante: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      } else {
+        console.log('Creating student:', formValue);
+        this.studentService.create(formValue).subscribe({
+          next: () => {
+            console.log('Student created successfully');
+            this.router.navigate(['/estudiantes']);
+          },
+          error: (error) => {
+            console.error('Error creating student:', error);
+            alert('Error al crear el estudiante: ' + (error.error?.message || error.message || 'Error desconocido'));
+            this.submitting.set(false);
+          }
+        });
+      }
     }
   }
 
