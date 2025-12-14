@@ -17,7 +17,7 @@ export class CourseRepository {
   }
 
   getById(id: string): Observable<Course> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('GET course:', url);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.get<Course>(url, { headers });
@@ -30,14 +30,14 @@ export class CourseRepository {
   }
 
   update(id: string, dto: Partial<CreateCourseDto>): Observable<Course> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('PUT course:', url, dto);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.put<Course>(url, dto, { headers });
   }
 
   delete(id: string): Observable<void> {
-    const url = `${this.baseUrl}/${id}`;
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
     console.log('DELETE course:', url);
     const headers = { 'Content-Type': 'application/json' };
     return this.http.delete<void>(url, { headers });
